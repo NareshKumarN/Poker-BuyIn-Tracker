@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import FirebaseCore
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
@@ -31,6 +33,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         window?.rootViewController = tab
         window?.makeKeyAndVisible()
+        // Have to Add Google.PLIST file
+        //FirebaseApp.configure()
         return true
     }
 }
