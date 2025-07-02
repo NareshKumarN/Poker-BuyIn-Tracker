@@ -22,6 +22,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
         window?.rootViewController = AdvancedLaunchScreenViewController()
         window?.makeKeyAndVisible()
+        // Have to Add Google.PLIST file
+        //FirebaseApp.configure()
         return true
     }
 }
