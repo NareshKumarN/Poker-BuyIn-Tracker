@@ -16,6 +16,8 @@ class AdvancedLaunchScreenViewController: UIViewController {
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let backgroundGradientLayer = CAGradientLayer()
+    private let customNavBarColor = UIColor(red: 20/255.0, green: 125/255.0, blue: 140/255.0, alpha: 1.0)
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -349,97 +351,45 @@ class AdvancedLaunchScreenViewController: UIViewController {
     }
     
     private func transitionToMainApp() {
-        // Create tab bar controller with proper setup to prevent navigation animations
-        let tabBar = createTabBarController()
-        
-        let keyWindow: UIWindow?
-        if let scene = view.window?.windowScene {
-            keyWindow = scene.windows.first(where: { $0.isKeyWindow })
-        } else if let windowScene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive && $0 is UIWindowScene }) as? UIWindowScene {
-            keyWindow = windowScene.windows.first(where: { $0.isKeyWindow })
-        } else {
-            keyWindow = UIApplication.shared.delegate?.window ?? nil
+        guard let windowScene = view.window?.windowScene ??
+                (UIApplication.shared.connectedScenes.first { $0.activationState == .foregroundActive } as? UIWindowScene),
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+            return
         }
-        guard let window = keyWindow else { return }
-        
-        // Add tab bar view as subview first (this prevents any root controller animations)
-        tabBar.view.frame = window.bounds
-        tabBar.view.alpha = 0
-        window.addSubview(tabBar.view)
-        
-        // Fade to tab bar
-        UIView.animate(withDuration: 0.3, animations: {
-            tabBar.view.alpha = 1
-        }) { _ in
-            // Now set as root controller and clean up
+
+        let tabBar = createTabBarController()
+
+        // Transition without manually inserting views
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve) {
             window.rootViewController = tabBar
-            // The old launch screen controller will be automatically deallocated
         }
     }
-    
+
     private func createTabBarController() -> UITabBarController {
-        // Pre-configure navigation bar appearance globally to prevent any animations
+
+        // Configure UINavigationBar appearance globally
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .systemBackground
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.label]
-        
-        // Apply globally to prevent any transition animations
+
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         UINavigationBar.appearance().prefersLargeTitles = false
-        
-        // Create placeholder view controllers with proper setup
-        let currentVC = CurrentSessionViewController()
-        currentVC.view.backgroundColor = .systemBackground
-        currentVC.title = "Current Session"
-        // Disable any potential view animations
-        currentVC.view.layer.removeAllAnimations()
-        let currentNav = UINavigationController(rootViewController: currentVC)
+
+        // Create each tab with navigation controller
+        let currentNav = UINavigationController(rootViewController: CurrentSessionViewController())
         currentNav.tabBarItem = UITabBarItem(title: "Current", image: UIImage(systemName: "gamecontroller.fill"), tag: 0)
-        
-        let usersVC = UsersViewController()
-        usersVC.view.backgroundColor = .systemBackground
-        usersVC.title = "Players"
-        usersVC.view.layer.removeAllAnimations()
-        let usersNav = UINavigationController(rootViewController: usersVC)
+
+        let usersNav = UINavigationController(rootViewController: UsersViewController())
         usersNav.tabBarItem = UITabBarItem(title: "Players", image: UIImage(systemName: "person.3.fill"), tag: 1)
-        
-        let sessionsVC = SessionsViewController()
-        sessionsVC.view.backgroundColor = .systemBackground
-        sessionsVC.title = "History"
-        sessionsVC.view.layer.removeAllAnimations()
-        let sessionsNav = UINavigationController(rootViewController: sessionsVC)
+
+        let sessionsNav = UINavigationController(rootViewController: SessionsViewController())
         sessionsNav.tabBarItem = UITabBarItem(title: "History", image: UIImage(systemName: "clock.fill"), tag: 2)
-        
-        let tabBar = UITabBarController()
-        tabBar.viewControllers = [currentNav, usersNav, sessionsNav]
-        tabBar.tabBar.tintColor = .systemBlue
-        tabBar.tabBar.backgroundColor = .systemBackground
-        
-        // Force immediate appearance configuration for all navigation controllers
-        for navController in tabBar.viewControllers as! [UINavigationController] {
-            navController.navigationBar.standardAppearance = appearance
-            navController.navigationBar.scrollEdgeAppearance = appearance
-            navController.navigationBar.compactAppearance = appearance
-            navController.navigationBar.prefersLargeTitles = false
-            
-            // Disable navigation bar animations completely
-            navController.navigationBar.layer.removeAllAnimations()
-            navController.view.layer.removeAllAnimations()
-            
-            // Force layout immediately to prevent any transition animations
-            navController.navigationBar.setNeedsLayout()
-            navController.navigationBar.layoutIfNeeded()
-        }
-        
-        // Disable any potential tab bar animations
-        tabBar.view.layer.removeAllAnimations()
-        tabBar.tabBar.layer.removeAllAnimations()
-        
-        return tabBar
+
+        // Create tab bar controller
+        let tab = UITabBarController()
+        tab.viewControllers = [currentNav, usersNav, sessionsNav]
+        return tab
     }
+
 }
